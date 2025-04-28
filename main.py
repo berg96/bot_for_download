@@ -7,7 +7,6 @@ from aiogram.utils.callback_answer import CallbackAnswerMiddleware
 from loguru import logger
 
 from config import config
-from keyboards.menu import main_menu, main_keyboard_menu
 from handlers import router as handlers_router
 
 from utils.logger import setup_logging, log_user_action
