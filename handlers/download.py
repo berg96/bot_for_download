@@ -1,33 +1,24 @@
 import asyncio
 import os
+import re
 from contextlib import asynccontextmanager
 
 from aiogram import Router, F
-from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import StatesGroup, State
-from aiogram.types import CallbackQuery, Message, FSInputFile
+from aiogram.types import Message, FSInputFile
 from loguru import logger
 
-from keyboards.menu import MenuCB, main_keyboard_menu
 from utils.download import download_video_and_get_description
-from utils.logger import log_user_action, LOG_WITH_USER
+from utils.logger import LOG_WITH_USER
+
+URL_RE = re.compile(
+    r'^(https?://)'
+    r'([A-Za-z0-9-]+\.)+'
+    r'[A-Za-z]{2,}'
+    r'(/[^\s]*)?$'
+)
 
 router = Router()
-
-class InstagramDownload(StatesGroup):
-    waiting_for_link = State()
-
-@router.message(Command("menu"))
-async def menu_handler(message: Message):
-    await message.answer("Выберите действие:", reply_markup=main_keyboard_menu())
-
-@router.callback_query(MenuCB.filter(F.action == 'instagram'))
-@router.message(F.text == '📷 Instagram')
-@log_user_action('instagram')
-async def handler_instagram(query: CallbackQuery, state: FSMContext):
-    await query.message.answer('Пожалуйста, пришлите ссылку на видео с Instagram 📷')
-    await state.set_state(InstagramDownload.waiting_for_link)
 
 
 async def animate_text(message: Message, stop_event: asyncio.Event, text: str):
@@ -65,12 +56,12 @@ async def log_action(user, action):
         )
     )
 
-@router.message(InstagramDownload.waiting_for_link)
-async def handler_instagram_link(message: Message, state: FSMContext):
+@router.message(F.text.regexp(URL_RE))
+async def handler_download_link(message: Message, state: FSMContext):
     url = message.text.strip()
     user = message.from_user
     os.makedirs('./downloads', exist_ok=True)
-    answer_message = await message.answer('⏳ ')
+    answer_message = await message.answer('⏳ З')
     await log_action(user, f'Подготовка к загрузке с URL {url}')
     try:
         async with animated_message(answer_message, '⏳ Загрузка'):
@@ -91,3 +82,11 @@ async def handler_instagram_link(message: Message, state: FSMContext):
         await answer_message.edit_text(f'❌ Ошибка: {e}')
     finally:
         await state.clear()
+
+
+@router.message(~F.text.regexp(URL_RE))
+async def ask_for_link(message: Message):
+    await message.answer(
+        '❌ Пожалуйста, пришлите корректную ссылку, '
+        'начинающуюся с http:// или https://'
+    )

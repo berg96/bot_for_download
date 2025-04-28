@@ -1,8 +1,8 @@
 from aiogram import Router
 
-from .instagram import router as instagram_router
+from .download import router as download_router
 
 router = Router()
 router.include_router(
-    instagram_router
+    download_router
 )

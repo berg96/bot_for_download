@@ -16,10 +16,7 @@ setup_logging()
 
 @log_user_action('/start')
 async def start_handler(message: Message):
-    await message.answer('Откуда хотите скачать?:', reply_markup=main_menu().as_markup())
-
-async def menu_handler(message: Message):
-    await message.answer('', reply_markup=main_keyboard_menu())
+    await message.answer('Пришли ссылку')
 
 
 async def main():
@@ -31,7 +28,6 @@ async def main():
     await bot.set_my_commands([
         BotCommand(command='start', description='Начать работу'),
         BotCommand(command='help', description='Помощь'),
-        BotCommand(command='menu', description='Меню')
     ])
     dp.message.register(start_handler, CommandStart())
     await dp.start_polling(bot)
