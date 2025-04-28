@@ -4,6 +4,9 @@ from loguru import logger
 import sys
 
 
+LOG_WITH_USER = 'Пользователь {} (ID: {}, username: @{}): {}'
+
+
 def setup_logging():
     logger.remove()
     logger.add(sys.stderr, level="INFO", format="{time} | {level} | {message}")
@@ -19,9 +22,10 @@ def log_user_action(action_description: str):
         async def wrapper(event, *args, **kwargs):
             user = event.from_user
             logger.info(
-                f'Пользователь {user.full_name} (ID: {user.id}, '
-                f'username: @{user.username}) '
-                f'выполнил действие: {action_description}'
+                LOG_WITH_USER.format(
+                    user.full_name, user.id, user.username,
+                    f'выполнил действие: {action_description}'
+                )
             )
             return await func(event, *args, **kwargs)
         return wrapper
